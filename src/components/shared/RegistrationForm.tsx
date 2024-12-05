@@ -16,10 +16,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useAuthStore } from "@/store/useAusthStore";
+import { AuthContextProps, useAuth } from "../context/AuthProvider";
 
 export const RegistrationForm: FC = () => {
-  const register = useAuthStore((state) => state.register);
+  const { register } = useAuth() as AuthContextProps;
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
     defaultValues: {

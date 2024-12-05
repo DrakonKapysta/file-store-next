@@ -9,17 +9,16 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useAuthStore } from "@/store/useAusthStore";
+import { useAuth } from "../context/AuthProvider";
 
-export const LoginForm: FC = () => {
-  const login = useAuthStore((state) => state.login);
+export const LoginForm: FC = ({ onClose }: { onClose?: () => void }) => {
+  const { login } = useAuth();
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -32,6 +31,10 @@ export const LoginForm: FC = () => {
     console.log(values);
 
     await login(values.email, values.password);
+    form.reset();
+    if (onClose) {
+      onClose();
+    }
   }
 
   return (
