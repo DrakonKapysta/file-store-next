@@ -11,6 +11,7 @@ import Image from "next/image";
 export default function NavbarLinks() {
   const { isAuth, user } = useAuth() as AuthContextProps;
   const avatar = user && user.avatar ? AVATAR_URL + user.avatar : "/avatar.svg";
+
   return (
     <>
       <div className="flex justify-between gap-4 items-center">

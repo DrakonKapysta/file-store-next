@@ -19,3 +19,24 @@ export async function POST(request: Request) {
 
   return result;
 }
+
+export async function GET(request: Request) {
+  const cookies = request.headers.get("Cookie");
+
+  try {
+    const response = await axios.get(
+      "http://localhost:3001/api/validate-token",
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: cookies,
+        },
+        withCredentials: true,
+      }
+    );
+    return NextResponse.json(response.data, { status: 200 });
+  } catch (error) {
+    console.log(error);
+    return NextResponse.json("", { status: 401 });
+  }
+}

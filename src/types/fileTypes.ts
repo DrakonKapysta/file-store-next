@@ -4,4 +4,5 @@ export type FileType = {
   size: number;
   date: string;
   type: string;
+  parent: string | null;
 };

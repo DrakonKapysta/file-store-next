@@ -28,8 +28,6 @@ export const LoginForm: FC = ({ onClose }: { onClose?: () => void }) => {
   });
 
   async function onSubmit(values: z.infer<typeof loginSchema>) {
-    console.log(values);
-
     await login(values.email, values.password);
     form.reset();
     if (onClose) {

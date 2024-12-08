@@ -1,5 +1,4 @@
 "use client";
-import { useFileStore } from "@/store/fileStore";
 import { FileType } from "@/types/fileTypes";
 import Image from "next/image";
 import React, { FC } from "react";
@@ -7,17 +6,19 @@ import { Trash, Download } from "lucide-react";
 import { deleteFile } from "@/actions/file";
 import sizeFormat from "@/lib/sizeFormat";
 import { downloadFileClient } from "@/actions/client/fileClient";
+import { useUserFileStore } from "@/store/userFileStore";
 
 interface FileProps {
+  userId: string;
   file: FileType;
 }
 
-export const File: FC<FileProps> = ({ file }) => {
-  const setCurrentDir = useFileStore((state) => state.setCurrentDir);
-  const currentDir = useFileStore((state) => state.currentDir);
-  const pushToDirStack = useFileStore((state) => state.pushToDirStack);
-  const deleteFileFromStore = useFileStore((state) => state.deleteFile);
-  const filesView = useFileStore((state) => state.view);
+export const UserFile: FC<FileProps> = ({ file, userId }) => {
+  const setCurrentDir = useUserFileStore((state) => state.setCurrentDir);
+  const currentDir = useUserFileStore((state) => state.currentDir);
+  const pushToDirStack = useUserFileStore((state) => state.pushToDirStack);
+  const deleteFileFromStore = useUserFileStore((state) => state.deleteFile);
+  const filesView = useUserFileStore((state) => state.view);
 
   const openFileHandler = (file: FileType) => {
     if (file.type === "dir") {
@@ -27,7 +28,7 @@ export const File: FC<FileProps> = ({ file }) => {
   };
 
   const handleClientDownloadClick = async () => {
-    await downloadFileClient(file);
+    await downloadFileClient(file, userId);
   };
   const handleDeleteClick = async (
     event: React.MouseEvent<HTMLButtonElement>

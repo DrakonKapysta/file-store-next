@@ -1,35 +1,35 @@
 "use client";
-import { uploadFileClient } from "@/actions/client/fileClient";
-import { getFiles, searchFiles } from "@/actions/file";
-import { CreateFileForm } from "@/components/shared/CreateFileForm";
-import { FileList } from "@/components/shared/FileList";
-import { Loader } from "@/components/shared/Loader";
-import { Modal } from "@/components/shared/Modal";
-import { Uploader } from "@/components/shared/Uploader";
-import { useFileStore } from "@/store/fileStore";
+import { getFilesByUserId, searchFilesByUserId } from "@/actions/file";
+import { useUserFileStore } from "@/store/userFileStore";
+import React, { FC, use, useEffect, useRef, useState } from "react";
+import { UserFileList } from "./UserFileList";
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
+import { Modal } from "./Modal";
+import { CreateUserFileForm } from "./CreateUserFileForm";
+import { uploadFileClient } from "@/actions/client/fileClient";
+interface UserFileListProps {
+  userId: string;
+}
 
-export default function Disk() {
-  const [modalOpen, setModalOpen] = React.useState(false);
+export const UserDisk: FC<UserFileListProps> = ({ userId }) => {
   const [sort, setSort] = useState("type");
-  const currentDir = useFileStore((state) => state.currentDir);
-  const setCurrentDir = useFileStore((state) => state.setCurrentDir);
-  const dirStack = useFileStore((state) => state.dirStack);
-  const setFiles = useFileStore((state) => state.setFiles);
-  const addFile = useFileStore((state) => state.addFile);
-  const [dragEnter, setDragEnter] = useState(false);
-  const view = useFileStore((state) => state.view);
-  const setView = useFileStore((state) => state.setView);
-  const setIsLoading = useFileStore((state) => state.setIsLoading);
-  const isLoading = useFileStore((state) => state.isLoading);
+  const currentDir = useUserFileStore((state) => state.currentDir);
+  const setCurrentDir = useUserFileStore((state) => state.setCurrentDir);
+  const setFiles = useUserFileStore((state) => state.setFiles);
+  const addFile = useUserFileStore((state) => state.addFile);
+  const dirStack = useUserFileStore((state) => state.dirStack);
+  const view = useUserFileStore((state) => state.view);
+  const setView = useUserFileStore((state) => state.setView);
+  const [modalOpen, setModalOpen] = React.useState(false);
+  const isLoading = useUserFileStore((state) => state.isLoading);
+  const setIsLoading = useUserFileStore((state) => state.setIsLoading);
 
   const [serachName, setSearchName] = useState("");
   const [searchTimeout, setSearchTimeout] = useState<any>(false);
   const serachHandler = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchName(e.target.value);
     setIsLoading(true);
-    const res = await searchFiles(e.target.value);
+    const res = await searchFilesByUserId(userId, e.target.value);
     if (searchTimeout !== false) clearTimeout(searchTimeout);
     if (e.target.value !== "") {
       setSearchTimeout(
@@ -39,20 +39,13 @@ export default function Disk() {
         }, 500)
       );
     } else {
-      const res = await getFiles(currentDir, sort);
+      const res = await getFilesByUserId(userId, currentDir, sort);
       setFiles(res);
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    setIsLoading(true);
-    (async () => {
-      const res = await getFiles(currentDir, sort);
-      setFiles(res);
-      setIsLoading(false);
-    })();
-  }, [currentDir, setFiles, sort, setIsLoading]);
+  const prevUserIdRef = useRef<string | null>(null);
 
   const backClickHandler = () => {
     const prevDir = dirStack.pop();
@@ -64,45 +57,29 @@ export default function Disk() {
   ) => {
     const files = event.target.files ? Array.from(event.target.files) : [];
     files.forEach(async (file) => {
-      const res = await uploadFileClient(file, currentDir);
+      const res = await uploadFileClient(file, currentDir, userId);
       addFile(res);
     });
   };
 
-  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragEnter(true);
-  };
+  useEffect(() => {
+    setIsLoading(true);
+    if (prevUserIdRef.current !== userId) {
+      setCurrentDir(null);
+      setFiles([]);
+      setIsLoading(false);
+    }
+    prevUserIdRef.current = userId;
+    const loadFiles = async () => {
+      const files = await getFilesByUserId(userId, currentDir, sort);
+      setFiles(files);
+      setIsLoading(false);
+    };
+    loadFiles();
+  }, [userId, sort, currentDir, setFiles, setCurrentDir, setIsLoading]);
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragEnter(false);
-  };
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const files = Array.from(e.dataTransfer.files);
-    files.forEach(async (file) => {
-      const res = await uploadFileClient(file, currentDir);
-      addFile(res);
-    });
-    setDragEnter(false);
-  };
-
-  return !dragEnter ? (
-    <div
-      className="mt-4 container mx-auto px-4 h-full overflow-hidden "
-      onDragEnter={handleDragEnter}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-    >
+  return (
+    <div className="flex flex-col mt-4 container mx-auto px-4 w-full h-full overflow-hidden">
       <div className="flex gap-4">
         <div className="flex gap-4 items-center  w-full">
           <button
@@ -144,7 +121,7 @@ export default function Disk() {
         <div className="flex items-center gap-2 ">
           <Image
             className="justify-self-center"
-            src={"./sort.svg"}
+            src={"/sort.svg"}
             alt="sort"
             width={46}
             height={46}
@@ -162,7 +139,7 @@ export default function Disk() {
           <button onClick={() => setView("list")} className="w-8 h-8 relative">
             <Image
               className="justify-self-center"
-              src={"./plate.svg"}
+              src={"/plate.svg"}
               alt="sort"
               width={46}
               height={46}
@@ -178,7 +155,7 @@ export default function Disk() {
           <button onClick={() => setView("plate")} className="w-8 h-8 relative">
             <Image
               className="justify-self-center "
-              src={"./union.svg"}
+              src={"/union.svg"}
               alt="sort"
               width={46}
               height={46}
@@ -193,25 +170,15 @@ export default function Disk() {
           </button>
         </div>
       </div>
-
-      {isLoading ? <Loader /> : <FileList />}
-
+      <UserFileList userId={userId} />
       {modalOpen && (
         <Modal onClose={() => setModalOpen(false)}>
-          <CreateFileForm closeModal={() => setModalOpen(false)} />
+          <CreateUserFileForm
+            userId={userId}
+            closeModal={() => setModalOpen(false)}
+          />
         </Modal>
       )}
-      <Uploader />
-    </div>
-  ) : (
-    <div
-      onDragEnter={handleDragEnter}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      className="container border-4 h-full mx-auto mt-5 mb-5 flex justify-center items-center border-gray-500/50 border-dashed  text-gray-500/60 bg-slate-400/20 text-5xl"
-    >
-      Drag File
     </div>
   );
-}
+};

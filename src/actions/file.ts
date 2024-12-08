@@ -25,7 +25,6 @@ export async function getFiles(dirId?: string | null, sort?: string) {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (response.status === 200) {
-      console.log(response.data);
       return response.data;
     }
   } catch (error) {
@@ -33,19 +32,52 @@ export async function getFiles(dirId?: string | null, sort?: string) {
   }
 }
 
-export async function createDir(name: string, dirId?: string | null) {
+export async function getFilesByUserId(
+  id: string,
+  dirId?: string | null,
+  sort?: string
+) {
+  const token = cookies().get("accessToken")?.value;
+
+  try {
+    let url = `${process.env.BASE_URL}files/getFilesByUserId?id=${id}`;
+    if (dirId) {
+      url = `${process.env.BASE_URL}files/getFilesByUserId?id=${id}&parent=${dirId}`;
+    }
+    if (sort) {
+      url = `${process.env.BASE_URL}files/getFilesByUserId?id=${id}&sort=${sort}`;
+    }
+    if (dirId && sort) {
+      url = `${process.env.BASE_URL}files/getFilesByUserId?id=${id}&parent=${dirId}&sort=${sort}`;
+    }
+
+    const response = await axios.get(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (response.status === 200) {
+      return response.data;
+    }
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+export async function createDir(
+  name: string,
+  dirId?: string | null,
+  userId?: string
+) {
   const token = cookies().get("accessToken")?.value;
 
   try {
     const response = await axios.post(
       `${process.env.BASE_URL}files`,
-      { name, parent: dirId, type: "dir" },
+      { name, parent: dirId, type: "dir", userId },
       {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
     if (response.status === 200) {
-      console.log(response.data);
       return response.data;
     }
   } catch (error) {
@@ -97,7 +129,6 @@ export async function uploadFile(
       }
     );
     if (response.status === 200) {
-      console.log(response.data);
       return { data: response.data, uploadFile, uploadProgress };
     }
   } catch (error) {
@@ -130,14 +161,13 @@ export async function deleteFile(file: FileType) {
 
   try {
     const response = await axios.delete(
-      `${process.env.BASE_URL}files?id=${file._id}`,
+      `${process.env.BASE_URL}files?id=${file._id}&parent=${file.parent || ""}`,
       {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
 
     if (response.status === 200) {
-      console.log(response.data);
       return response.data;
     }
   } catch (error) {
@@ -158,6 +188,24 @@ export async function searchFiles(search: string) {
   try {
     const response = await axios.get(
       `${process.env.BASE_URL}files/search?search=${search}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (e) {
+    console.log(e);
+  } finally {
+    console.log("finally");
+  }
+}
+export async function searchFilesByUserId(id: string, search: string) {
+  const token = cookies().get("accessToken")?.value;
+  try {
+    const response = await axios.get(
+      `${process.env.BASE_URL}files/searchByUserId?id=${id}&search=${search}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,

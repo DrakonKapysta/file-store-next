@@ -16,11 +16,11 @@ interface FileState {
   setIsLoading: (isLoading: boolean) => void;
 }
 
-export const useFileStore = create<FileState>()((set) => ({
+export const useUserFileStore = create<FileState>()((set) => ({
   files: [],
-  isLoading: false,
   currentDir: null,
   dirStack: [],
+  isLoading: false,
   view: "list",
   setFiles: (files) =>
     set(() => {
@@ -56,9 +56,7 @@ export const useFileStore = create<FileState>()((set) => ({
       view: viewPayload,
     })),
   setIsLoading: (isLoading: boolean) =>
-    set(() => {
-      return {
-        isLoading,
-      };
-    }),
+    set(() => ({
+      isLoading,
+    })),
 }));

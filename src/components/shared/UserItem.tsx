@@ -1,6 +1,7 @@
 "use client";
 import { AVATAR_URL } from "@/config/fileConfig";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import React, { FC } from "react";
 
 interface UserItemProps {
@@ -10,12 +11,17 @@ interface UserItemProps {
 }
 
 export const UserItem: FC<UserItemProps> = ({ id, avatar, email }) => {
+  const router = useRouter();
   const avatarLogo = avatar ? AVATAR_URL + avatar : "/avatar.svg";
+
+  const handleUserClick = () => {
+    router.push(`/user/${id}`);
+  };
 
   return (
     <div
       onClick={() => {
-        console.log("click");
+        handleUserClick();
       }}
       className="border rounded-md border-gray-400 p-4 hover:shadow-md cursor-pointer"
     >

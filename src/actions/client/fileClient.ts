@@ -2,14 +2,17 @@ import { useUploadStore } from "@/store/uploadStore";
 import { FileType } from "@/types/fileTypes";
 import axios from "axios";
 
-export async function downloadFileClient(file: FileType) {
+export async function downloadFileClient(file: FileType, userId?: string) {
   try {
     const baseUrl = "http://localhost:3001/api/";
-    const response = await fetch(`${baseUrl}files/download?id=${file._id}`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-      },
-    });
+    const response = await fetch(
+      `${baseUrl}files/download?id=${file._id}&userId=${userId || ""}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      }
+    );
 
     if (response.status === 200) {
       const blob = await response.blob();
@@ -26,7 +29,11 @@ export async function downloadFileClient(file: FileType) {
   }
 }
 
-export async function uploadFileClient(file: File, dirId: string) {
+export async function uploadFileClient(
+  file: File,
+  dirId: string | null,
+  userId?: string
+) {
   try {
     const baseUrl = "http://localhost:3001/api/";
     const formData = new FormData();
@@ -34,6 +41,9 @@ export async function uploadFileClient(file: File, dirId: string) {
 
     if (dirId) {
       formData.append("parent", dirId);
+    }
+    if (userId) {
+      formData.append("userId", userId);
     }
     const uploadFile = {
       name: file.name,
@@ -95,9 +105,6 @@ export async function uploadAvatar(file: File) {
         },
       }
     );
-    console.log("BAE", `${baseUrl}files/upload-avatar`);
-
-    console.log("DATA", response.data);
 
     return response.data;
   } catch (error) {
